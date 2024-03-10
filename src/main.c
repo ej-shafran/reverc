@@ -1,4 +1,6 @@
 #include "raylib.h"
+#include <assert.h>
+#include <stdbool.h>
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 800
@@ -21,10 +23,11 @@ int main(void)
 	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "reverc");
 
 	CellState board[BOARD_WIDTH][BOARD_HEIGHT] = { 0 };
+	CellState turn = CELL_BLACK;
 
 	while (!WindowShouldClose()) {
 		if (IsKeyReleased(KEY_Q))
-			break;
+			goto EXIT;
 
 		BeginDrawing();
 		ClearBackground(RED);
@@ -39,7 +42,7 @@ int main(void)
 			2;
 
 		for (int x = 0; x < BOARD_WIDTH; ++x) {
-			for (int y = 0; y < BOARD_HEIGHT; y++) {
+			for (int y = 0; y < BOARD_HEIGHT; ++y) {
 				Rectangle rec = {
 					.x = x * (CELL_WIDTH_PX +
 						  CELL_PADDING_PX) +
@@ -51,14 +54,39 @@ int main(void)
 					.height = CELL_HEIGHT_PX,
 				};
 
+				bool isEmpty = board[x][y] == CELL_EMPTY;
+				bool isClicked =
+					IsMouseButtonReleased(
+						MOUSE_BUTTON_LEFT) &&
+					CheckCollisionPointRec(
+						GetMousePosition(), rec);
+
+				if (isEmpty && isClicked) {
+					board[x][y] = turn;
+					switch (turn) {
+					case CELL_BLACK:
+						turn = CELL_WHITE;
+						break;
+					case CELL_WHITE:
+						turn = CELL_BLACK;
+						break;
+					default:
+						assert(false && "Invalid turn");
+						goto EXIT;
+					}
+				}
+
 				Color color;
 				switch (board[x][y]) {
 				case CELL_WHITE:
 					color = WHITE;
+					break;
 				case CELL_BLACK:
 					color = BLACK;
+					break;
 				default:
 					color = GRAY;
+					break;
 				}
 
 				DrawRectangleRec(rec, color);
@@ -67,6 +95,7 @@ int main(void)
 		EndDrawing();
 	}
 
+EXIT:
 	CloseWindow();
 
 	return 0;
